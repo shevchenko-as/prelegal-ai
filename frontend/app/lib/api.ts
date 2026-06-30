@@ -27,10 +27,10 @@ export const api = {
       fetch(`${BASE}/api/documents/${id}`, { method: 'DELETE' }),
   },
 
-  chat: (messages: ChatMessage[], currentFields: Record<string, unknown>) =>
+  chat: (messages: ChatMessage[], currentFields: Record<string, unknown>, docType: string | null = null) =>
     request<ChatResponse>('/api/chat', {
       method: 'POST',
-      body: JSON.stringify({ messages, current_fields: currentFields }),
+      body: JSON.stringify({ messages, current_fields: currentFields, doc_type: docType }),
     }),
 };
 
@@ -42,6 +42,7 @@ export interface ChatMessage {
 export interface ChatResponse {
   message: string;
   fields: Record<string, unknown>;
+  doc_type: string | null;
 }
 
 export interface Document {
