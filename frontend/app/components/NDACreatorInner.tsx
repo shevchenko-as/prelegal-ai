@@ -1,20 +1,25 @@
 'use client';
 
 import { useState } from 'react';
-import NDAChat from './NDAChat';
-import NDAPreview from './NDAPreview';
-import { defaultFormData, NDAFormData } from '../lib/types';
+import DocumentChat from './DocumentChat';
+import DocumentPreview from './DocumentPreview';
 
 export default function NDACreatorInner() {
-  const [data, setData] = useState<NDAFormData>(defaultFormData);
+  const [docType, setDocType] = useState<string | null>(null);
+  const [fields, setFields] = useState<Record<string, unknown>>({});
 
   return (
     <div className="flex flex-1 min-h-0">
       <div className="w-[420px] flex-shrink-0 border-r border-gray-200 flex flex-col min-h-0">
-        <NDAChat data={data} onFieldsUpdate={setData} />
+        <DocumentChat
+          fields={fields}
+          docType={docType}
+          onFieldsUpdate={setFields}
+          onDocTypeChange={setDocType}
+        />
       </div>
       <div className="flex-1 flex flex-col min-h-0">
-        <NDAPreview data={data} />
+        <DocumentPreview docType={docType} fields={fields} />
       </div>
     </div>
   );
