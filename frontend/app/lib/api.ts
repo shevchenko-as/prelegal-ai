@@ -26,7 +26,23 @@ export const api = {
     delete: (id: number) =>
       fetch(`${BASE}/api/documents/${id}`, { method: 'DELETE' }),
   },
+
+  chat: (messages: ChatMessage[], currentFields: Record<string, unknown>) =>
+    request<ChatResponse>('/api/chat', {
+      method: 'POST',
+      body: JSON.stringify({ messages, current_fields: currentFields }),
+    }),
 };
+
+export interface ChatMessage {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
+export interface ChatResponse {
+  message: string;
+  fields: Record<string, unknown>;
+}
 
 export interface Document {
   id: number;

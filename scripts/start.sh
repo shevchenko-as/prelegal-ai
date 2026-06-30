@@ -23,7 +23,7 @@ if ! [ -d "node_modules" ]; then
   echo "  Installing frontend dependencies..."
   npm install --silent
 fi
-npm run dev -- -p 3000 &> "$ROOT/.frontend.log" &
+npm run dev -- -p 3001 &> "$ROOT/.frontend.log" &
 FRONTEND_PID=$!
 echo "  Frontend PID: $FRONTEND_PID"
 
@@ -32,6 +32,6 @@ echo "$BACKEND_PID $FRONTEND_PID" > "$PIDS_FILE"
 
 echo ""
 echo "  Backend:  http://localhost:8000"
-echo "  Frontend: http://localhost:3000"
+echo "  Frontend: http://localhost:3001"
 echo ""
 echo "Run scripts/stop.sh to stop."
