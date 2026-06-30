@@ -1,8 +1,13 @@
 const BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000';
 
+function authHeader(): Record<string, string> {
+  const token = typeof window !== 'undefined' ? localStorage.getItem('prelegal_token') : null;
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${BASE}${path}`, {
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...authHeader() },
     ...init,
   });
   if (!res.ok) throw new Error(`API error ${res.status}: ${await res.text()}`);
@@ -17,14 +22,12 @@ export const api = {
   },
 
   documents: {
-    list: () => request<Document[]>('/api/documents'),
-    get: (id: number) => request<Document>(`/api/documents/${id}`),
+    list: () => request<SavedDocument[]>('/api/documents'),
+    get: (id: number) => request<SavedDocument>(`/api/documents/${id}`),
     create: (payload: DocumentCreate) =>
-      request<Document>('/api/documents', { method: 'POST', body: JSON.stringify(payload) }),
-    update: (id: number, payload: DocumentCreate) =>
-      request<Document>(`/api/documents/${id}`, { method: 'PUT', body: JSON.stringify(payload) }),
+      request<SavedDocument>('/api/documents', { method: 'POST', body: JSON.stringify(payload) }),
     delete: (id: number) =>
-      fetch(`${BASE}/api/documents/${id}`, { method: 'DELETE' }),
+      fetch(`${BASE}/api/documents/${id}`, { method: 'DELETE', headers: authHeader() }),
   },
 
   chat: (messages: ChatMessage[], currentFields: Record<string, unknown>, docType: string | null = null) =>
@@ -45,8 +48,9 @@ export interface ChatResponse {
   doc_type: string | null;
 }
 
-export interface Document {
+export interface SavedDocument {
   id: number;
+  user_id: number;
   title: string;
   template_type: string;
   content: string;
@@ -56,6 +60,6 @@ export interface Document {
 
 export interface DocumentCreate {
   title: string;
-  template_type?: string;
+  template_type: string;
   content: string;
 }
