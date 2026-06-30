@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mutual NDA Creator — Prelegal AI</title>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f4f5f7;
+      color: #1a1a2e;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      background: #1a1a2e;
+      color: #fff;
+      padding: 14px 28px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+    header h1 { font-size: 1.1rem; font-weight: 600; letter-spacing: 0.02em; }
+    header span { font-size: 0.8rem; color: #8888aa; margin-left: auto; }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: 420px 1fr;
+      flex: 1;
+      min-height: 0;
+    }
+
+    /* ── FORM PANEL ── */
+    .form-panel {
+      background: #fff;
+      border-right: 1px solid #e2e4ea;
+      overflow-y: auto;
+      padding: 24px 20px 40px;
+    }
+
+    .section-title {
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #6b7280;
+      margin: 24px 0 12px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    .section-title:first-child { margin-top: 0; }
+
+    .field { margin-bottom: 14px; }
+    .field label {
+      display: block;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: #374151;
+      margin-bottom: 4px;
+    }
+    .field input[type="text"],
+    .field input[type="date"],
+    .field input[type="number"],
+    .field textarea {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      color: #111827;
+      background: #fafafa;
+      transition: border-color 0.15s;
+      outline: none;
+    }
+    .field input:focus,
+    .field textarea:focus {
+      border-color: #6366f1;
+      background: #fff;
+    }
+    .field textarea { resize: vertical; min-height: 72px; }
+
+    .radio-group { display: flex; flex-direction: column; gap: 8px; }
+    .radio-option {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.82rem;
+      color: #374151;
+      cursor: pointer;
+    }
+    .radio-option input[type="radio"] { accent-color: #6366f1; }
+
+    .inline-number {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 6px;
+    }
+    .inline-number input {
+      width: 64px;
+      padding: 6px 8px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      font-size: 0.82rem;
+      text-align: center;
+      outline: none;
+    }
+    .inline-number input:focus { border-color: #6366f1; }
+    .inline-number span { font-size: 0.82rem; color: #6b7280; }
+
+    .party-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    /* ── PREVIEW PANEL ── */
+    .preview-panel {
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+    .preview-toolbar {
+      background: #fff;
+      border-bottom: 1px solid #e2e4ea;
+      padding: 10px 24px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+    .preview-toolbar span {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #6b7280;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      flex: 1;
+    }
+
+    .btn {
+      padding: 8px 18px;
+      border-radius: 7px;
+      font-size: 0.83rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: opacity 0.15s;
+    }
+    .btn:hover { opacity: 0.85; }
+    .btn-primary { background: #6366f1; color: #fff; }
+
+    .preview-scroll {
+      flex: 1;
+      overflow-y: auto;
+      padding: 32px 48px;
+      background: #f4f5f7;
+    }
+
+    /* ── DOCUMENT STYLES ── */
+    #document {
+      background: #fff;
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 56px 64px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+      font-family: 'Georgia', serif;
+      font-size: 0.9rem;
+      line-height: 1.7;
+      color: #111;
+    }
+
+    #document h1 {
+      font-size: 1.2rem;
+      text-align: center;
+      margin-bottom: 4px;
+      font-family: -apple-system, sans-serif;
+    }
+    #document h2 {
+      font-size: 0.95rem;
+      margin-top: 22px;
+      margin-bottom: 6px;
+      font-family: -apple-system, sans-serif;
+    }
+    #document h3 {
+      font-size: 0.85rem;
+      font-weight: 700;
+      margin-top: 16px;
+      margin-bottom: 4px;
+      font-family: -apple-system, sans-serif;
+    }
+    #document p { margin-bottom: 10px; }
+    #document ul, #document ol { padding-left: 20px; margin-bottom: 10px; }
+    #document li { margin-bottom: 4px; }
+    #document strong { font-weight: 700; }
+    #document em { font-style: italic; }
+    #document hr {
+      border: none;
+      border-top: 2px solid #e5e7eb;
+      margin: 32px 0;
+    }
+    #document table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0;
+      font-size: 0.82rem;
+    }
+    #document th, #document td {
+      border: 1px solid #d1d5db;
+      padding: 8px 12px;
+      vertical-align: top;
+    }
+    #document th { background: #f9fafb; font-weight: 700; }
+
+    .field-value {
+      background: #ede9fe;
+      border-radius: 3px;
+      padding: 0 3px;
+      font-style: normal;
+    }
+    .field-empty {
+      background: #fee2e2;
+      border-radius: 3px;
+      padding: 0 3px;
+      color: #991b1b;
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Mutual NDA Creator</h1>
+  <span>Prelegal AI · Common Paper Standard v1.0</span>
+</header>
+
+<div class="workspace">
+
+  <!-- ═══ FORM ═══ -->
+  <div class="form-panel">
+
+    <div class="section-title">Agreement Details</div>
+
+    <div class="field">
+      <label>Purpose</label>
+      <textarea id="purpose" rows="3" placeholder="Evaluating whether to enter into a business relationship with the other party."></textarea>
+    </div>
+    <div class="field">
+      <label>Effective Date</label>
+      <input type="date" id="effectiveDate">
+    </div>
+
+    <div class="field">
+      <label>MNDA Term</label>
+      <div class="radio-group">
+        <label class="radio-option">
+          <input type="radio" name="mndaTerm" value="expires" checked>
+          Expires after
+          <div class="inline-number">
+            <input type="number" id="mndaYears" value="1" min="1" max="99">
+            <span>year(s) from Effective Date</span>
+          </div>
+        </label>
+        <label class="radio-option">
+          <input type="radio" name="mndaTerm" value="until_terminated">
+          Continues until terminated
+        </label>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Term of Confidentiality</label>
+      <div class="radio-group">
+        <label class="radio-option">
+          <input type="radio" name="confTerm" value="years" checked>
+          <div class="inline-number">
+            <input type="number" id="confYears" value="1" min="1" max="99">
+            <span>year(s) from Effective Date</span>
+          </div>
+        </label>
+        <label class="radio-option">
+          <input type="radio" name="confTerm" value="perpetuity">
+          In perpetuity
+        </label>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Governing Law (State)</label>
+      <input type="text" id="governingLaw" placeholder="e.g. Delaware">
+    </div>
+    <div class="field">
+      <label>Jurisdiction</label>
+      <input type="text" id="jurisdiction" placeholder="e.g. courts located in New Castle, DE">
+    </div>
+    <div class="field">
+      <label>MNDA Modifications <em style="font-weight:400;color:#9ca3af">(optional)</em></label>
+      <textarea id="modifications" rows="2" placeholder="List any modifications, or leave blank"></textarea>
+    </div>
+
+    <div class="section-title">Party 1</div>
+    <div class="party-grid">
+      <div class="field"><label>Company</label><input type="text" id="p1company" placeholder="Acme Inc."></div>
+      <div class="field"><label>Signatory Name</label><input type="text" id="p1name" placeholder="Jane Smith"></div>
+      <div class="field"><label>Title</label><input type="text" id="p1title" placeholder="CEO"></div>
+      <div class="field"><label>Notice Address</label><input type="text" id="p1address" placeholder="jane@acme.com"></div>
+    </div>
+
+    <div class="section-title">Party 2</div>
+    <div class="party-grid">
+      <div class="field"><label>Company</label><input type="text" id="p2company" placeholder="Beta Corp."></div>
+      <div class="field"><label>Signatory Name</label><input type="text" id="p2name" placeholder="John Doe"></div>
+      <div class="field"><label>Title</label><input type="text" id="p2title" placeholder="CTO"></div>
+      <div class="field"><label>Notice Address</label><input type="text" id="p2address" placeholder="john@betacorp.com"></div>
+    </div>
+
+  </div>
+
+  <!-- ═══ PREVIEW ═══ -->
+  <div class="preview-panel">
+    <div class="preview-toolbar">
+      <span>Preview</span>
+      <button class="btn btn-primary" onclick="downloadPDF()">⬇ Download PDF</button>
+    </div>
+    <div class="preview-scroll">
+      <div id="document"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ── Standard Terms (embedded from templates/Mutual-NDA.md) ──
+const STANDARD_TERMS = `# Standard Terms
+
+1. **Introduction**. This Mutual Non-Disclosure Agreement (which incorporates these Standard Terms and the Cover Page (defined below)) ("**MNDA**") allows each party ("**Disclosing Party**") to disclose or make available information in connection with the **Purpose** which (1) the Disclosing Party identifies to the receiving party ("**Receiving Party**") as "confidential", "proprietary", or the like or (2) should be reasonably understood as confidential or proprietary due to its nature and the circumstances of its disclosure ("**Confidential Information**"). Each party's Confidential Information also includes the existence and status of the parties' discussions and information on the Cover Page. Confidential Information includes technical or business information, product designs or roadmaps, requirements, pricing, security and compliance documentation, technology, inventions and know-how. To use this MNDA, the parties must complete and sign a cover page incorporating these Standard Terms ("**Cover Page**"). Each party is identified on the Cover Page and capitalized terms have the meanings given herein or on the Cover Page.
+
+2. **Use and Protection of Confidential Information**. The Receiving Party shall: (a) use Confidential Information solely for the **Purpose**; (b) not disclose Confidential Information to third parties without the Disclosing Party's prior written approval, except that the Receiving Party may disclose Confidential Information to its employees, agents, advisors, contractors and other representatives having a reasonable need to know for the **Purpose**, provided these representatives are bound by confidentiality obligations no less protective of the Disclosing Party than the applicable terms in this MNDA and the Receiving Party remains responsible for their compliance with this MNDA; and (c) protect Confidential Information using at least the same protections the Receiving Party uses for its own similar information but no less than a reasonable standard of care.
+
+3. **Exceptions**. The Receiving Party's obligations in this MNDA do not apply to information that it can demonstrate: (a) is or becomes publicly available through no fault of the Receiving Party; (b) it rightfully knew or possessed prior to receipt from the Disclosing Party without confidentiality restrictions; (c) it rightfully obtained from a third party without confidentiality restrictions; or (d) it independently developed without using or referencing the Confidential Information.
+
+4. **Disclosures Required by Law**. The Receiving Party may disclose Confidential Information to the extent required by law, regulation or regulatory authority, subpoena or court order, provided (to the extent legally permitted) it provides the Disclosing Party reasonable advance notice of the required disclosure and reasonably cooperates, at the Disclosing Party's expense, with the Disclosing Party's efforts to obtain confidential treatment for the Confidential Information.
+
+5. **Term and Termination**. This MNDA commences on the **Effective Date** and expires at the end of the **MNDA Term**. Either party may terminate this MNDA for any or no reason upon written notice to the other party. The Receiving Party's obligations relating to Confidential Information will survive for the **Term of Confidentiality**, despite any expiration or termination of this MNDA.
+
+6. **Return or Destruction of Confidential Information**. Upon expiration or termination of this MNDA or upon the Disclosing Party's earlier request, the Receiving Party will: (a) cease using Confidential Information; (b) promptly after the Disclosing Party's written request, destroy all Confidential Information in the Receiving Party's possession or control or return it to the Disclosing Party; and (c) if requested by the Disclosing Party, confirm its compliance with these obligations in writing. As an exception to subsection (b), the Receiving Party may retain Confidential Information in accordance with its standard backup or record retention policies or as required by law, but the terms of this MNDA will continue to apply to the retained Confidential Information.
+
+7. **Proprietary Rights**. The Disclosing Party retains all of its intellectual property and other rights in its Confidential Information and its disclosure to the Receiving Party grants no license under such rights.
+
+8. **Disclaimer**. ALL CONFIDENTIAL INFORMATION IS PROVIDED "AS IS", WITH ALL FAULTS, AND WITHOUT WARRANTIES, INCLUDING THE IMPLIED WARRANTIES OF TITLE, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+
+9. **Governing Law and Jurisdiction**. This MNDA and all matters relating hereto are governed by, and construed in accordance with, the laws of the State of **Governing Law**, without regard to the conflict of laws provisions of such **Governing Law**. Any legal suit, action, or proceeding relating to this MNDA must be instituted in the federal or state courts located in **Jurisdiction**. Each party irrevocably submits to the exclusive jurisdiction of such **Jurisdiction** in any such suit, action, or proceeding.
+
+10. **Equitable Relief**. A breach of this MNDA may cause irreparable harm for which monetary damages are an insufficient remedy. Upon a breach of this MNDA, the Disclosing Party is entitled to seek appropriate equitable relief, including an injunction, in addition to its other remedies.
+
+11. **General**. Neither party has an obligation under this MNDA to disclose Confidential Information to the other or proceed with any proposed transaction. Neither party may assign this MNDA without the prior written consent of the other party, except that either party may assign this MNDA in connection with a merger, reorganization, acquisition or other transfer of all or substantially all its assets or voting securities. Any assignment in violation of this Section is null and void. This MNDA will bind and inure to the benefit of each party's permitted successors and assigns. Waivers must be signed by the waiving party's authorized representative and cannot be implied from conduct. If any provision of this MNDA is held unenforceable, it will be limited to the minimum extent necessary so the rest of this MNDA remains in effect. This MNDA (including the Cover Page) constitutes the entire agreement of the parties with respect to its subject matter, and supersedes all prior and contemporaneous understandings, agreements, representations, and warranties, whether written or oral, regarding such subject matter. This MNDA may only be amended, modified, waived, or supplemented by an agreement in writing signed by both parties. Notices, requests and approvals under this MNDA must be sent in writing to the email or postal addresses on the Cover Page and are deemed delivered on receipt. This MNDA may be executed in counterparts, including electronic copies, each of which is deemed an original and which together form the same agreement.
+
+*Common Paper Mutual Non-Disclosure Agreement Version 1.0 — free to use under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).*`;
+
+// ── Helpers ──
+function val(id) { return document.getElementById(id).value.trim(); }
+function radio(name) { return document.querySelector(\`input[name="\${name}"]:checked\`).value; }
+
+function field(value, placeholder) {
+  if (value) return \`<span class="field-value">\${value}</span>\`;
+  return \`<span class="field-empty">\${placeholder}</span>\`;
+}
+
+function formatDate(raw) {
+  if (!raw) return null;
+  const d = new Date(raw + 'T00:00:00');
+  return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+}
+
+// ── Build cover page HTML ──
+function buildCoverPage() {
+  const purpose      = val('purpose');
+  const effectiveDate = formatDate(val('effectiveDate'));
+  const mndaTerm     = radio('mndaTerm');
+  const mndaYears    = val('mndaYears');
+  const confTerm     = radio('confTerm');
+  const confYears    = val('confYears');
+  const govLaw       = val('governingLaw');
+  const jurisdiction = val('jurisdiction');
+  const mods         = val('modifications');
+  const p1company    = val('p1company');
+  const p1name       = val('p1name');
+  const p1title      = val('p1title');
+  const p1address    = val('p1address');
+  const p2company    = val('p2company');
+  const p2name       = val('p2name');
+  const p2title      = val('p2title');
+  const p2address    = val('p2address');
+
+  const mndaTermText = mndaTerm === 'expires'
+    ? \`Expires \${field(mndaYears, 'N')} year(s) from Effective Date\`
+    : 'Continues until terminated in accordance with the terms of the MNDA';
+
+  const confTermText = confTerm === 'years'
+    ? \`\${field(confYears, 'N')} year(s) from Effective Date, but in the case of trade secrets until Confidential Information is no longer considered a trade secret under applicable laws\`
+    : 'In perpetuity';
+
+  return \`
+<h1>Mutual Non-Disclosure Agreement</h1>
+
+<h3>Purpose</h3>
+<p>\${field(purpose, 'Describe the purpose of this agreement')}</p>
+
+<h3>Effective Date</h3>
+<p>\${field(effectiveDate, 'Select a date')}</p>
+
+<h3>MNDA Term</h3>
+<p>\${mndaTermText}</p>
+
+<h3>Term of Confidentiality</h3>
+<p>\${confTermText}</p>
+
+<h3>Governing Law &amp; Jurisdiction</h3>
+<p><strong>Governing Law:</strong> \${field(govLaw, 'State')}</p>
+<p><strong>Jurisdiction:</strong> \${field(jurisdiction, 'City/County and State')}</p>
+
+<h3>MNDA Modifications</h3>
+<p>\${mods ? field(mods, '') : '<em style="color:#9ca3af">None</em>'}</p>
+
+<p><em>By signing this Cover Page, each party agrees to enter into this MNDA as of the Effective Date.</em></p>
+
+<table>
+  <thead>
+    <tr><th></th><th>Party 1</th><th>Party 2</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><strong>Company</strong></td><td>\${field(p1company,'—')}</td><td>\${field(p2company,'—')}</td></tr>
+    <tr><td><strong>Print Name</strong></td><td>\${field(p1name,'—')}</td><td>\${field(p2name,'—')}</td></tr>
+    <tr><td><strong>Title</strong></td><td>\${field(p1title,'—')}</td><td>\${field(p2title,'—')}</td></tr>
+    <tr><td><strong>Notice Address</strong></td><td>\${field(p1address,'—')}</td><td>\${field(p2address,'—')}</td></tr>
+    <tr><td><strong>Signature</strong></td><td>&nbsp;</td><td>&nbsp;</td></tr>
+    <tr><td><strong>Date</strong></td><td>&nbsp;</td><td>&nbsp;</td></tr>
+  </tbody>
+</table>
+
+<hr>
+\`;
+}
+
+// ── Render preview ──
+function render() {
+  const coverHTML = buildCoverPage();
+  const termsHTML = marked.parse(STANDARD_TERMS);
+  document.getElementById('document').innerHTML = coverHTML + termsHTML;
+}
+
+// ── PDF download ──
+function downloadPDF() {
+  const el = document.getElementById('document');
+  const p1 = val('p1company') || 'Party1';
+  const p2 = val('p2company') || 'Party2';
+  const filename = \`Mutual-NDA_\${p1}_\${p2}.pdf\`.replace(/\s+/g, '-');
+
+  html2pdf().set({
+    margin: [15, 15, 15, 15],
+    filename,
+    html2canvas: { scale: 2, useCORS: true },
+    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+  }).from(el).save();
+}
+
+// ── Wire up all inputs ──
+document.querySelectorAll('input, textarea').forEach(el => {
+  el.addEventListener('input', render);
+  el.addEventListener('change', render);
+});
+
+// ── Initial render ──
+render();
+</script>
+</body>
+</html>
