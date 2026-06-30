@@ -1,10 +1,5 @@
-import type { Metadata } from 'next';
-import NDACreator from './components/NDACreator';
-
-export const metadata: Metadata = {
-  title: 'Mutual NDA Creator — Prelegal AI',
-};
+import { redirect } from 'next/navigation';
 
 export default function Home() {
-  return <NDACreator />;
+  redirect('/login');
 }
