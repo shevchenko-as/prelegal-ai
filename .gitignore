@@ -37,3 +37,9 @@ node_modules/
 
 # Docker
 *.override.yml
+
+# Runtime
+data/*.db
+.pids
+.backend.log
+.frontend.log
